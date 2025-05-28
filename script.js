@@ -15,15 +15,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Estas URLs deben redirigir de vuelta a 'index.html?return_to_checkpoint=X'
     const checkpointUrls = {
         1: [
-        'https://cuty.io/OP2onuNk', // Simula la redirección de vuelta
+        'https://cuty.io/OP2onuNk',
         'https://link-center.net/1355276/mhLzCyqwizBa'
         ],
         2: [
-        'https://cuty.io/tJ4ED6Y',
+        'https://cuty.io/77l7AqLI',
         'https://link-hub.net/1355276/03mhtJ7Yyhzz'
         ],
         3: [
-        'https://cuty.io/NvWhsIv',
+        'https://cuty.io/HFgV8wWoG',
         'https://link-hub.net/1355276/WG77ywCkrRvE'
         ]
     };
