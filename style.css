@@ -1,0 +1,80 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f0f0f0;
+    margin: 0;
+}
+
+.container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+#checkpoint-status {
+    margin-bottom: 20px;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+#generated-key {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #007bff;
+    word-break: break-all; /* Para claves largas */
+    background-color: #e9ecef;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 15px;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 15px;
+    transition: background-color 0.3s ease; /* Efecto suave al pasar el mouse */
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+/* Estilos para el contenedor de los botones de checkpoint */
+#checkpoint-buttons {
+    display: flex; /* Para que los botones estén en línea */
+    flex-wrap: wrap; /* Si la pantalla es pequeña, que se envuelvan */
+    justify-content: center; /* Centra los botones */
+    gap: 15px; /* Espacio entre los botones */
+    margin-top: 20px; /* Espacio superior */
+}
+
+/* Estilos para los botones individuales dentro del checkpoint-buttons */
+#checkpoint-buttons button {
+    flex-basis: 48%; /* Ocupa casi la mitad del espacio disponible */
+    max-width: 220px; /* Ancho máximo para cada botón */
+}
+
+/* Puedes darle un color diferente al hover si quieres distinguirlos */
+#option-1-button:hover {
+    background-color: #004085; /* Un azul un poco más oscuro */
+}
+
+#option-2-button:hover {
+    background-color: #004085; /* Mismo color de hover o puedes elegir otro */
+}
