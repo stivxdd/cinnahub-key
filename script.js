@@ -15,16 +15,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Estas URLs deben redirigir de vuelta a 'index.html?return_to_checkpoint=X'
     const checkpointUrls = {
         1: [
-        'https://stivxdd.github.io/cinnahub-key/index.html?return_to_checkpoint=1', // Simula la redirección de vuelta
-        'https://stivxdd.github.io/cinnahub-key/index.html?return_to_checkpoint=1'
+        'https://cuty.io/OP2onuNk', // Simula la redirección de vuelta
+        'https://link-center.net/1355276/mhLzCyqwizBa'
         ],
         2: [
-        'https://stivxdd.github.io/cinnahub-key/index.html?return_to_checkpoint=2',
-        'https://stivxdd.github.io/cinnahub-key/index.html?return_to_checkpoint=2'
+        'https://cuty.io/tJ4ED6Y',
+        'https://link-hub.net/1355276/03mhtJ7Yyhzz'
         ],
         3: [
-        'https://stivxdd.github.io/cinnahub-key/index.html?return_to_checkpoint=3',
-        'https://stivxdd.github.io/cinnahub-key/index.html?return_to_checkpoint=3'
+        'https://cuty.io/NvWhsIv',
+        'https://link-hub.net/1355276/WG77ywCkrRvE'
         ]
     };
     // --- FIN de Configuración de URLs ---
