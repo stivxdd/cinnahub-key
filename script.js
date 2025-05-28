@@ -20,11 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ],
         2: [
         'https://cuty.io/77l7AqLI',
-        'https://link-hub.net/1355276/03mhtJ7Yyhzz'
+        'https://link-hub.net/1355295/eljYRfIbugqS'
         ],
         3: [
         'https://cuty.io/HFgV8wWoG',
-        'https://link-hub.net/1355276/WG77ywCkrRvE'
+        'https://link-hub.net/1355297/8jX2NRMAg4GL'
         ]
     };
     // --- FIN de Configuración de URLs ---
