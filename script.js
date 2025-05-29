@@ -234,34 +234,41 @@ async function generateAndDisplayKey() {
 
 
 // --- Función para actualizar la interfaz de usuario ---
-function updateUI(checkpointActual) { 
-    console.log('DEBUG: Paso 5.1 - Iniciando updateUI con checkpointActual:', checkpointActual);
+function updateUI() { // No necesita recibir 'checkpointActual' como parámetro ahora
     keyDisplay.style.display = 'none'; // Asegura que la clave esté oculta
 
-    if (checkpointActual <= 3) {
-        checkpointStatusSpan.textContent = `Checkpoint ${checkpointActual}`;
+    // Obtener el progreso directamente de localStorage para la UI más reciente
+    let currentProgressForUI = parseInt(localStorage.getItem('userCheckpointProgress')) || 1; 
+
+    // Asegurarse de que si el progreso es >3, se fije en 4 para la UI (estado completado)
+    if (currentProgressForUI > 3) {
+        currentProgressForUI = 4;
+        localStorage.setItem('userCheckpointProgress', '4'); // Mantener consistencia
+    }
+
+    if (currentProgressForUI <= 3) {
+        checkpointStatusSpan.textContent = `Checkpoint ${currentProgressForUI}`;
         checkpointButtonsDiv.style.display = 'flex';
 
         option1Button.textContent = `Opción 1: Cuty.io`;
         option2Button.textContent = `Opción 2: LinkVertice`;
 
         // Asigna la función de redirección a cada botón usando las URLs correctas.
-        // Se valida que checkpointUrls[checkpointActual] no sea undefined.
-        if (checkpointUrls[checkpointActual] && checkpointUrls[checkpointActual][0]) {
-            option1Button.onclick = () => redirectToAdPage(checkpointUrls[checkpointActual][0]);
+        if (checkpointUrls[currentProgressForUI] && checkpointUrls[currentProgressForUI][0]) {
+            option1Button.onclick = () => redirectToAdPage(checkpointUrls[currentProgressForUI][0]);
             option1Button.disabled = false;
         } else {
-            console.error(`ERROR: URL para Checkpoint ${checkpointActual}, Opción 1 no encontrada. Deshabilitando botón.`);
-            option1Button.disabled = true; // Deshabilita el botón si no hay URL
+            console.error(`ERROR: URL para Checkpoint ${currentProgressForUI}, Opción 1 no encontrada. Deshabilitando botón.`);
+            option1Button.disabled = true;
             option1Button.textContent = "Error URL";
         }
 
-        if (checkpointUrls[checkpointActual] && checkpointUrls[checkpointActual][1]) {
-            option2Button.onclick = () => redirectToAdPage(checkpointUrls[checkpointActual][1]);
+        if (checkpointUrls[currentProgressForUI] && checkpointUrls[currentProgressForUI][1]) {
+            option2Button.onclick = () => redirectToAdPage(checkpointUrls[currentProgressForUI][1]);
             option2Button.disabled = false;
         } else {
-            console.error(`ERROR: URL para Checkpoint ${checkpointActual}, Opción 2 no encontrada. Deshabilitando botón.`);
-            option2Button.disabled = true; // Deshabilita el botón si no hay URL
+            console.error(`ERROR: URL para Checkpoint ${currentProgressForUI}, Opción 2 no encontrada. Deshabilitando botón.`);
+            option2Button.disabled = true;
             option2Button.textContent = "Error URL";
         }
 
@@ -270,7 +277,7 @@ function updateUI(checkpointActual) {
         checkpointButtonsDiv.style.display = 'none';
         generateAndDisplayKey(); // Llama a la función de generación de clave.
     }
-    console.log('DEBUG: Paso 5.3 - updateUI completado.');
+    console.log('DEBUG: Paso 5.3 - updateUI completado con UI para checkpoint:', currentProgressForUI);
 }
 
 
