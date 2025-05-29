@@ -40,8 +40,7 @@ const checkpointUrls = {
 
 // Instancia de Firebase y Firestore (inicializada más abajo)
 let db;
-// sessionId se genera y guarda localmente, solo para asociar la clave en Firestore.
-let sessionId = localStorage.getItem('sessionId') || null; 
+let sessionId = localStorage.getItem('sessionId') || null; // Carga el ID de sesión del localStorage al inicio
 
 // Función para redirigir al usuario a la URL acortada.
 function redirectToAdPage(shortenedUrl) {
@@ -50,7 +49,9 @@ function redirectToAdPage(shortenedUrl) {
 
 // Función para generar una clave aleatoria.
 function generateRandomKey(length) {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+    // --- CAMBIO AQUÍ: SOLO LETRAS DEL ABECEDARIO ---
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'; 
+    // --- FIN CAMBIO ---
     let result = '';
     const charactersLength = characters.length;
     for (let i = 0; i < length; i++) {
@@ -71,84 +72,87 @@ function generateUniqueSessionId() {
 }
 
 
-// --- Funciones para interactuar con Firestore (SOLO PARA LA CLAVE FINAL) ---
+// --- Funciones para interactuar con Firestore ---
 
-// Inicializa Firebase y Firestore. Solo se hace una vez.
 async function initializeFirebaseAndFirestore() {
+    console.log('DEBUG: Paso 1.1 - Iniciando initializeFirebaseAndFirestore.');
     try {
         firebase.initializeApp(firebaseConfig);
+        console.log('DEBUG: Paso 1.2 - Firebase app inicializada.');
         db = firebase.firestore();
-        console.log('DEBUG: Firebase y Firestore inicializados correctamente.');
+        console.log('DEBUG: Paso 1.3 - Firestore inicializado.');
     } catch (error) {
         console.error('ERROR EN INICIALIZACIÓN DE FIREBASE:', error);
         alert('Error crítico al iniciar la aplicación. Revisa la consola y tu configuración de Firebase.');
         return false;
     }
+    console.log('DEBUG: Paso 1.4 - initializeFirebaseAndFirestore completado con éxito.');
     return true;
 }
 
-// Verifica si existe una clave activa en localStorage y la valida con Firestore.
 async function checkAndDisplayExistingKey() {
-    const storedKey = localStorage.getItem('generatedKey');
-    const storedExpiration = localStorage.getItem('keyExpiration');
-    const storedSessionId = localStorage.getItem('sessionId'); // Necesitamos el sessionId para buscar en DB
+    console.log('DEBUG: Paso 3.1 - Iniciando checkAndDisplayExistingKey.');
+    if (!sessionId) {
+        console.log('DEBUG: Paso 3.2 - No hay sessionId, saliendo de checkAndDisplayExistingKey.');
+        return false;
+    }
 
-    if (storedKey && storedExpiration && storedSessionId) {
-        const now = new Date().getTime();
-        const expirationDate = parseInt(storedExpiration);
+    try {
+        // La colección 'sessions' ya no se usa para el progreso, pero la verificamos para la keyRef
+        const sessionDoc = await db.collection('sessions').doc(sessionId).get();
+        if (!sessionDoc.exists) { // Si no existe la sesión, no hay key asociada en la DB.
+             localStorage.clear(); // Limpiamos todo localmente si no hay sesión en DB
+             return false;
+        }
 
-        if (now < expirationDate) {
-            // Clave activa localmente, verificar que aún existe en Firestore y pertenece a esta sesión.
-            try {
-                // Busca la clave en Firestore por su valor y sessionId.
-                const keyQuery = await db.collection('keys')
-                                         .where('value', '==', storedKey)
-                                         .where('sessionId', '==', storedSessionId)
-                                         .limit(1) // Solo necesitamos encontrar una.
-                                         .get();
+        const sessionData = sessionDoc.data();
+        
+        if (sessionData.currentCheckpoint >= 4 && sessionData.keyRef) {
+            console.log('DEBUG: Paso 3.5 - Sesión indica progreso finalizado y keyRef, intentando obtener clave.');
+            const keyDoc = await sessionData.keyRef.get();
+            if (keyDoc.exists) {
+                const keyData = keyDoc.data();
+                const now = new Date().getTime();
 
-                if (!keyQuery.empty) {
-                    // La clave fue encontrada en Firestore y coincide con la sesión.
-                    // Esto indica que es una clave válida y no fue manipulada localmente.
-                    generatedKeyParagraph.textContent = storedKey;
+                if (keyData.expiresAt.toDate().getTime() > now) {
+                    console.log('DEBUG: Paso 3.6 - Clave activa encontrada:', keyData.value);
+                    generatedKeyParagraph.textContent = keyData.value;
                     keyDisplay.style.display = 'block';
                     checkpointButtonsDiv.style.display = 'none';
                     checkpointStatusSpan.textContent = "¡Tu clave está activa!";
-                    localStorage.setItem('userCheckpointProgress', '4'); // Aseguramos el progreso local como finalizado.
-                    return true; // Clave activa y verificada.
+                    localStorage.setItem('userCheckpointProgress', '4'); // Sincroniza progreso local
+                    return true;
                 } else {
-                    // Clave local no encontrada en Firestore o no coincide (posible manipulación/borrado en DB).
-                    console.warn('ADVERTENCIA: Clave local no encontrada o no válida en Firestore. Reseteando progreso local.');
-                    localStorage.clear(); // Limpia todo el progreso local si hay inconsistencia.
+                    console.log('DEBUG: Paso 3.6 - Clave expirada, limpiando sesión.');
+                    await sessionDoc.ref.update({
+                        currentCheckpoint: 0, // Clave expirada, reinicia el progreso en la DB
+                        keyRef: null
+                    });
+                    await keyDoc.ref.delete(); 
                 }
-            } catch (error) {
-                console.error('ERROR verificando clave en Firestore:', error);
-                alert('Hubo un error al verificar tu clave. Por favor, reinicia la página.');
-                localStorage.clear(); // Ante un error, es mejor resetear.
             }
-        } else {
-            // Clave expirada localmente.
-            console.log('DEBUG: Clave local expirada.');
-            localStorage.clear(); // Limpia todo el progreso local.
         }
+        console.log('DEBUG: Paso 3.7 - No hay clave activa o expiró.');
+        return false;
+    } catch (error) {
+        console.error('ERROR EN checkAndDisplayExistingKey:', error);
+        localStorage.clear(); // En caso de error, resetear el progreso local
+        return false;
     }
-    return false; // No hay clave válida localmente o no pasó la verificación de Firestore.
 }
 
-// Genera una nueva clave, la guarda en Firestore y actualiza la UI.
 async function generateAndDisplayKey() {
+    console.log('DEBUG: Paso 4.1 - Iniciando generateAndDisplayKey.');
     const keyLength = 25;
     let uniqueKey = '';
     let keyExists = true;
     let attempts = 0;
     const maxAttempts = 10;
 
-    let lastGeneratedKeyAttempt = localStorage.getItem('lastGeneratedKeyAttempt') || null;
+    let lastGeneratedKey = localStorage.getItem('lastGeneratedKeyAttempt') || null;
 
-    // Genera una clave única (evitando repeticiones *locales* consecutivas)
     while (keyExists && attempts < maxAttempts) {
         uniqueKey = generateRandomKey(keyLength);
-        // Verifica unicidad en la base de datos de Firestore.
         const keyQuery = await db.collection('keys').where('value', '==', uniqueKey).limit(1).get();
         if (keyQuery.empty) {
             keyExists = false;
@@ -162,63 +166,68 @@ async function generateAndDisplayKey() {
     }
 
     const expirationTimeMs = 24 * 60 * 60 * 1000;
-    const expiresAt = new Date().getTime() + expirationTimeMs;
+    const expiresAt = firebase.firestore.Timestamp.fromMillis(new Date().getTime() + expirationTimeMs); 
 
     try {
-        // Asegúrate de que haya un sessionId local para asociar la clave.
+        // Asegurarse de que el sessionId exista para asociar la clave.
         if (!sessionId) {
             sessionId = generateUniqueSessionId();
             localStorage.setItem('sessionId', sessionId);
         }
 
-        // Guarda la nueva clave en la colección 'keys' de Firestore.
-        await db.collection('keys').add({
+        const newKeyRef = await db.collection('keys').add({
             value: uniqueKey,
             generatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            expiresAt: expiresAt,
-            sessionId: sessionId // Asocia la clave con la sesión local.
+            expiresAt: expiresAt, 
+            sessionId: sessionId
         });
+
+        // Actualiza la sesión en Firestore para vincular la clave generada
+        await db.collection('sessions').doc(sessionId).set(
+            {
+                currentCheckpoint: 4, 
+                keyRef: newKeyRef,
+                lastActivity: firebase.firestore.FieldValue.serverTimestamp()
+            },
+            { merge: true } 
+        );
 
         generatedKeyParagraph.textContent = uniqueKey;
         keyDisplay.style.display = 'block';
         checkpointStatusSpan.textContent = "¡Clave generada!";
         checkpointButtonsDiv.style.display = 'none';
 
-        // Guarda la clave y su expiración en localStorage.
         localStorage.setItem('generatedKey', uniqueKey);
-        localStorage.setItem('keyExpiration', expiresAt.toString());
+        localStorage.setItem('keyExpiration', expiresAt.toMillis().toString()); 
         localStorage.setItem('lastGeneratedKeyAttempt', uniqueKey);
-        localStorage.setItem('userCheckpointProgress', '4'); // Marca el progreso local como finalizado.
+        localStorage.setItem('userCheckpointProgress', '4');
 
     } catch (error) {
-        console.error('ERROR al generar o guardar clave en Firestore:', error);
+        console.error('ERROR EN generateAndDisplayKey:', error);
         alert('Error al generar la clave. Por favor, inténtalo de nuevo.');
     }
 }
 
 
 // --- Función para actualizar la interfaz de usuario (basada SOLO en localStorage para checkpoints) ---
-function updateUI() { 
-    keyDisplay.style.display = 'none'; // Asegura que la clave esté oculta.
+function updateUI(checkpointActual) { 
+    console.log('DEBUG: Paso 5.1 - Iniciando updateUI con checkpointActual:', checkpointActual);
+    keyDisplay.style.display = 'none';
 
-    // Obtener el progreso directamente de localStorage para la UI más reciente.
-    // userCheckpointProgress ahora es la única fuente de verdad para el progreso de la UI.
     let currentProgressForUI = parseInt(localStorage.getItem('userCheckpointProgress')) || 1; 
 
-    // Ajusta el progreso si es mayor a 3, marcándolo como el estado final.
     if (currentProgressForUI > 3) {
         currentProgressForUI = 4;
-        localStorage.setItem('userCheckpointProgress', '4'); // Mantener consistencia.
+        localStorage.setItem('userCheckpointProgress', '4');
     }
 
-    if (currentProgressForUI <= 3) { // Si estamos en un checkpoint activo (1, 2 o 3).
+    if (currentProgressForUI <= 3) {
         checkpointStatusSpan.textContent = `Checkpoint ${currentProgressForUI}`;
         checkpointButtonsDiv.style.display = 'flex';
 
         option1Button.textContent = `Opción 1: Cuty.io`;
         option2Button.textContent = `Opción 2: LinkVertice`;
 
-        // Asigna la función de redirección a cada botón usando las URLs correctas.
         if (checkpointUrls[currentProgressForUI] && checkpointUrls[currentProgressForUI][0]) {
             option1Button.onclick = () => redirectToAdPage(checkpointUrls[currentProgressForUI][0]);
             option1Button.disabled = false;
@@ -237,12 +246,12 @@ function updateUI() {
             option2Button.textContent = "Error URL";
         }
 
-    } else { // Si el progreso es 4, significa que se completaron todos los checkpoints.
+    } else {
         checkpointStatusSpan.textContent = "¡Proceso Completado!";
         checkpointButtonsDiv.style.display = 'none';
-        generateAndDisplayKey(); // Llama a la función de generación de clave.
+        generateAndDisplayKey();
     }
-    console.log('DEBUG: updateUI completado con UI para checkpoint:', currentProgressForUI);
+    console.log('DEBUG: Paso 5.3 - updateUI completado.');
 }
 
 
@@ -250,49 +259,43 @@ function updateUI() {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('DEBUG: DOMContentLoaded iniciado.');
     
-    // 1. Inicializar Firebase y Firestore. (Solo para la gestión de la clave final).
+    // 1. Inicializar Firebase y Firestore.
     const firebaseInitialized = await initializeFirebaseAndFirestore();
     if (!firebaseInitialized) {
         checkpointStatusSpan.textContent = "Error al cargar la aplicación (Firebase).";
-        console.error('DEBUG: Firebase no inicializado, saliendo.');
+        console.log('DEBUG: Paso 0.1 - Firebase no inicializado, saliendo.');
         return; 
     }
-    console.log('DEBUG: Firebase inicializado, continuando.');
+    console.log('DEBUG: Paso 0.2 - Firebase inicializado, continuando.');
 
     // 2. Intentar mostrar la clave si ya está activa (verifica local y en Firestore).
     const keyActive = await checkAndDisplayExistingKey();
     if (keyActive) {
-        console.log('DEBUG: Clave activa encontrada, terminando flujo.');
-        return; // Si la clave está activa y se mostró, terminamos.
+        console.log('DEBUG: Paso 0.4 - Clave activa encontrada, terminando flujo.');
+        return; 
     }
-    console.log('DEBUG: No hay clave activa, continuando con flujo de checkpoints.');
+    console.log('DEBUG: Paso 0.4 - No hay clave activa, continuando con flujo de checkpoints.');
 
     // 3. Manejar el progreso de los checkpoints (AHORA SOLO CON URL Y localStorage).
-    let currentProgress = parseInt(localStorage.getItem('userCheckpointProgress')) || 1; // Obtiene el progreso local.
-    const urlCheckpointParam = getCheckpointFromURL(); // Obtiene el checkpoint de la URL de retorno.
+    let currentProgress = parseInt(localStorage.getItem('userCheckpointProgress')) || 1; 
+    const urlCheckpointParam = getCheckpointFromURL();
     
     console.log(`DEBUG: Carga - Progreso local: ${currentProgress}, Parámetro URL: ${urlCheckpointParam}`);
 
     if (urlCheckpointParam > 0) { // Si regresó de un acortador (hay parámetro en la URL).
-        // Si el parámetro de la URL indica el checkpoint que el usuario acaba de completar
-        // Y es el checkpoint que estaba intentando (currentProgress)
         if (urlCheckpointParam === currentProgress) { 
             currentProgress++; // Avanza al siguiente checkpoint.
             localStorage.setItem('userCheckpointProgress', currentProgress.toString()); // Guarda el nuevo progreso local.
             console.log('DEBUG: Progreso local avanzado a:', currentProgress);
         } else {
-            // Si hay un salto en la URL o una redirección inesperada, mantenemos el progreso local.
             console.warn(`ADVERTENCIA: Intento de salto o redirección inesperada. Progreso local: ${currentProgress}, en URL: ${urlCheckpointParam}. Manteniendo progreso local.`);
         }
-        // Limpia el parámetro de la URL después de procesarlo.
         window.history.replaceState({}, document.title, window.location.pathname);
     } else {
-        // Si no hay parámetro de URL, simplemente usamos el progreso local actual.
         console.log('DEBUG: No hay parámetro de URL. Usando progreso local:', currentProgress);
     }
 
-    // Finalmente, actualiza la interfaz de usuario.
-    updateUI(); 
+    updateUI(currentProgress); // Actualiza la interfaz.
     
     // Event listener para el botón de copiar clave
     if (copyKeyButton) {
