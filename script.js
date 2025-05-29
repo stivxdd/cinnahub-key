@@ -1,16 +1,40 @@
+// --- FUNCIONES GLOBALES / FUERA DEL DOMContentLoaded ---
+// Estas funciones necesitan ser accesibles por los elementos HTML que tienen onclick.
+
+// Función para redirigir al usuario a la URL acortada.
+// Recibe la URL acortada y el número de checkpoint que se está intentando completar.
+function redirectToAdPage(shortenedUrl, checkpointNum) {
+    // La redirección ocurre simplemente cambiando la ubicación de la ventana del navegador.
+    // ¡RECUERDA!: El servicio de acortamiento de URL debe redirigir DE VUELTA
+    // a tu `index.html?return_to_checkpoint=${checkpointNum}` después de su proceso.
+    window.location.href = shortenedUrl;
+}
+
+// Función para generar una clave aleatoria (utilizada por generateAndDisplayKey).
+function generateRandomKey(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+    let result = '';
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
+
+
 document.addEventListener('DOMContentLoaded', async () => { // Hacemos la función principal asíncrona para usar await
-    // --- CONFIGURACIÓN DE FIREBASE (¡PERSONALIZADO CON TUS VALORES!) ---
+    // --- CONFIGURACIÓN DE FIREBASE (PEGA TU firebaseConfig AQUÍ) ---
+    // ¡IMPORTANTE!: Reemplaza estos valores con los de TU PROYECTO FIREBASE
     const firebaseConfig = {
-      apiKey: "AIzaSyBsE7Hzu_AQHduFk46Srqly89WP4n4vPew",
-      authDomain: "cinnahub-keygen.firebaseapp.com",
-      projectId: "cinnahub-keygen",
-      storageBucket: "cinnahub-keygen.firebasestorage.app",
-      messagingSenderId: "865047507078",
-      appId: "1:865047507078:web:8f90873cfd716d21a1a107"
+      apiKey: "AIzaSyBsE7Hzu_AQHduFk46Srqly89WP4n4vPew", // <-- TU API KEY
+      authDomain: "cinnahub-keygen.firebaseapp.com", // <-- TU AUTH DOMAIN
+      projectId: "cinnahub-keygen", // <-- TU PROJECT ID
+      storageBucket: "cinnahub-keygen.firebasestorage.app", // <-- TU STORAGE BUCKET
+      messagingSenderId: "865047507078", // <-- TU MESSAGING SENDER ID
+      appId: "1:865047507078:web:8f90873cfd716d21a1a107" // <-- TU APP ID
     };
 
     // Inicializa Firebase
-    // Nota: Para la versión 8.10.1, se usa firebase.initializeApp()
     firebase.initializeApp(firebaseConfig);
 
     // Obtiene una referencia a la instancia de Firestore
@@ -221,24 +245,13 @@ document.addEventListener('DOMContentLoaded', async () => { // Hacemos la funci�
 
             // Asigna la función de redirección a cada botón, usando las URLs acortadas.
             option1Button.onclick = () => redirectToAdPage(checkpointUrls[checkpoint][0], checkpoint);
-            option2Button.onclick = () => redirectToAdPage(checkpointUrls[checkpoint][1], checkpoint);
+            option2Button.onclick = ()s => redirectToAdPage(checkpointUrls[checkpoint][1], checkpoint);
 
         } else { // Si el checkpoint es 4 (o mayor), significa que se completaron todos.
             checkpointStatusSpan.textContent = "¡Proceso Completado!"; // Mensaje de estado final.
             checkpointButtonsDiv.style.display = 'none'; // Oculta los botones de checkpoint.
             generateAndDisplayKey(); // Llama a la función de generación de clave (que interactúa con Firestore).
         }
-    }
-
-    // Función para generar una clave aleatoria (utilizada por generateAndDisplayKey).
-    function generateRandomKey(length) {
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
-        let result = '';
-        const charactersLength = characters.length;
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        return result;
     }
 
 
