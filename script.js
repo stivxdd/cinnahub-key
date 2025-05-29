@@ -1,14 +1,11 @@
 // --- FUNCIONES GLOBALES (Declaradas al principio para asegurar accesibilidad) ---
 
 // Función para redirigir al usuario a la URL acortada.
-function redirectToAdPage(shortenedUrl, checkpointNum) {
-    // La redirección ocurre simplemente cambiando la ubicación de la ventana del navegador.
-    // ¡RECUERDA!: El servicio de acortamiento de URL debe redirigir DE VUELTA
-    // a tu `index.html?return_to_checkpoint=${checkpointNum}` después de su proceso.
+function redirectToAdPage(shortenedUrl) { // Ya no necesitamos checkpointNum aquí
     window.location.href = shortenedUrl;
 }
 
-// Función para generar una clave aleatoria (utilizada por generateAndDisplayKey).
+// Función para generar una clave aleatoria.
 function generateRandomKey(length) {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
     let result = '';
@@ -19,50 +16,16 @@ function generateRandomKey(length) {
     return result;
 }
 
-// Función para actualizar la interfaz de usuario (qué botones mostrar, qué texto).
-// NOTA: Esta función ahora recibe las referencias a los elementos HTML como parámetros
-// para asegurar que estén definidas cuando la función se llama desde cualquier lugar.
-function updateUIForCheckpoint(checkpoint, checkpointStatusSpan, checkpointButtonsDiv, option1Button, option2Button, keyDisplay, generatedKeyParagraph, checkpointUrls, generateAndDisplayKey) {
-    keyDisplay.style.display = 'none'; // Asegura que la clave esté oculta al cambiar de estado.
-
-    if (checkpoint <= 3) { // Si estamos en un checkpoint activo (1, 2 o 3).
-        // Si el checkpoint que se intenta mostrar es menor que el progreso real guardado,
-        // forzamos la UI a mostrar el progreso real para evitar saltos.
-        // Nota: currentCheckpoint es una variable local en DOMContentLoaded, aquí accedemos a userCheckpointProgress
-        // para la lógica de visualización robusta.
-        const userProgress = parseInt(localStorage.getItem('userCheckpointProgress')) || 1;
-        if (checkpoint < userProgress) {
-             checkpoint = userProgress; // Ajusta el checkpoint visual al progreso real.
-        }
-
-        checkpointStatusSpan.textContent = `Checkpoint ${checkpoint}`;
-        checkpointButtonsDiv.style.display = 'flex';
-
-        option1Button.textContent = `Opción 1: Cuty.io`;
-        option2Button.textContent = `Opción 2: LinkVertice`;
-
-        // Asigna la función de redirección a cada botón, usando las URLs acortadas.
-        option1Button.onclick = () => redirectToAdPage(checkpointUrls[checkpoint][0], checkpoint);
-        option2Button.onclick = () => redirectToAdPage(checkpointUrls[checkpoint][1], checkpoint);
-
-    } else { // Si el checkpoint es 4 (o mayor), significa que se completaron todos.
-        checkpointStatusSpan.textContent = "¡Proceso Completado!";
-        checkpointButtonsDiv.style.display = 'none';
-        generateAndDisplayKey(); // Llama a la función de generación de clave.
-    }
-}
-
-
 // --- INICIO DEL CÓDIGO QUE SE EJECUTA CUANDO EL DOM ESTÁ CARGADO ---
 document.addEventListener('DOMContentLoaded', async () => {
-    // --- CONFIGURACIÓN DE FIREBASE (PEGA TU firebaseConfig AQUÍ) ---
+    // --- CONFIGURACIÓN DE FIREBASE ---
     const firebaseConfig = {
-      apiKey: "AIzaSyBsE7Hzu_AQHduFk46Srqly89WP4n4vPew", // <-- TU API KEY
-      authDomain: "cinnahub-keygen.firebaseapp.com", // <-- TU AUTH DOMAIN
-      projectId: "cinnahub-keygen", // <-- TU PROJECT ID
-      storageBucket: "cinnahub-keygen.firebasestorage.app", // <-- TU STORAGE BUCKET
-      messagingSenderId: "865047507078", // <-- TU MESSAGING SENDER ID
-      appId: "1:865047507078:web:8f90873cfd716d21a1a107" // <-- TU APP ID
+      apiKey: "AIzaSyBsE7Hzu_AQHduFk46Srqly89WP4n4vPew",
+      authDomain: "cinnahub-keygen.firebaseapp.com",
+      projectId: "cinnahub-keygen",
+      storageBucket: "cinnahub-keygen.firebasestorage.app",
+      messagingSenderId: "865047507078",
+      appId: "1:865047507078:web:8f90873cfd716d21a1a107"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -70,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- FIN CONFIGURACIÓN DE FIREBASE ---
 
 
-    // Obtenemos referencias a los elementos HTML de tu página
+    // Obtenemos referencias a los elementos HTML
     const checkpointStatusSpan = document.getElementById('current-checkpoint');
     const checkpointButtonsDiv = document.getElementById('checkpoint-buttons');
     const option1Button = document.getElementById('option-1-button');
@@ -79,13 +42,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const generatedKeyParagraph = document.getElementById('generated-key');
     const copyKeyButton = document.getElementById('copy-key-button');
 
-    // sessionId se guardará en localStorage para identificar al usuario a través de visitas.
     let sessionId = localStorage.getItem('sessionId') || null;
 
     // --- Configuración de URLs Acortadas para cada Checkpoint ---
     const checkpointUrls = {
         1: [
-            'https://cuty.io/OP2onuNk', 
+            'https://cuty.io/OP2onuNk',
             'https://link-center.net/1355276/mhLzCyqwizBa'
         ],
         2: [
@@ -112,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
 
-    // --- Funciones para interactuar con Firestore (el "Backend") ---
+    // --- Funciones para interactuar con Firestore ---
 
     async function initializeSession() {
         if (!sessionId) {
@@ -231,7 +193,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
 
-    // --- Lógica de inicialización al cargar la página (el punto de entrada del script) ---
+    // --- Función para actualizar la interfaz de usuario (qué botones mostrar, qué texto) ---
+    // Esta función usa las variables de ámbito superior (closure) que se definen en DOMContentLoaded.
+    function updateUI() { // Renombrada para evitar confusión con el parámetro 'checkpoint'
+        keyDisplay.style.display = 'none'; // Asegura que la clave esté oculta al cambiar de estado.
+
+        // Aseguramos que currentCheckpoint es el valor real y actualizado
+        const actualCheckpoint = parseInt(localStorage.getItem('userCheckpointProgress')) || 1;
+        
+        if (actualCheckpoint <= 3) {
+            checkpointStatusSpan.textContent = `Checkpoint ${actualCheckpoint}`;
+            checkpointButtonsDiv.style.display = 'flex';
+
+            option1Button.textContent = `Opción 1: Cuty.io`;
+            option2Button.textContent = `Opción 2: LinkVertice`;
+
+            // Asigna la función de redirección a cada botón usando las URLs correctas
+            option1Button.onclick = () => redirectToAdPage(checkpointUrls[actualCheckpoint][0]);
+            option2Button.onclick = () => redirectToAdPage(checkpointUrls[actualCheckpoint][1]);
+
+        } else { // Si el checkpoint es 4 (o mayor), significa que se completaron todos.
+            checkpointStatusSpan.textContent = "¡Proceso Completado!";
+            checkpointButtonsDiv.style.display = 'none';
+            generateAndDisplayKey(); // Llama a la función de generación de clave (que interactúa con Firestore).
+        }
+    }
+
+
+    // --- Lógica de inicialización al cargar la página ---
 
     // 1. Al cargar la página, primero inicializa la sesión con Firebase.
     const sessionData = await initializeSession();
@@ -240,13 +229,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Intenta mostrar la clave si ya está activa y válida (según Firestore).
     const keyActive = await checkAndDisplayExistingKey();
     if (keyActive) {
+        // Si la clave está activa y se mostró correctamente, terminamos la ejecución aquí.
+        // updateUI() ya se habrá llamado implícitamente por checkAndDisplayExistingKey
         return; 
     }
 
     // 3. Si no hay clave activa, procede con la lógica de los checkpoints.
     const urlCheckpointParam = getCheckpointFromURL();
 
-    if (urlCheckpointParam > 0) {
+    if (urlCheckpointParam > 0) { // Si el usuario regresó de un acortador (hay parámetro en la URL).
         if (urlCheckpointParam === currentCheckpointFromDB) {
             const newCheckpointValue = urlCheckpointParam + 1;
             
@@ -255,28 +246,35 @@ document.addEventListener('DOMContentLoaded', async () => {
                     currentCheckpoint: newCheckpointValue,
                     lastActivity: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                currentCheckpointFromDB = newCheckpointValue;
+                currentCheckpointFromDB = newCheckpointValue; // Actualiza la variable local.
+                // También actualizamos localStorage para la lógica de visualización inmediata
+                localStorage.setItem('userCheckpointProgress', newCheckpointValue.toString());
             } catch (error) {
                 console.error('Error al actualizar progreso en Firestore:', error);
                 alert('Hubo un error al guardar tu progreso.');
             }
         } else {
             console.warn(`Intento de salto o redirección incorrecta. Progreso en DB: ${currentCheckpointFromDB}, en URL: ${urlCheckpointParam}.`);
+            // Mantenemos el progreso local según la DB
+            localStorage.setItem('userCheckpointProgress', currentCheckpointFromDB.toString());
         }
 
+        // Limpia el parámetro de la URL para evitar comportamientos inesperados en futuras recargas.
         window.history.replaceState({}, document.title, window.location.pathname);
     } else {
-        // currentCheckpointFromDB ya tiene el valor correcto.
+        // Asegúrate de que el localStorage refleje el estado de la DB al inicio si no hay URL param
+        localStorage.setItem('userCheckpointProgress', currentCheckpointFromDB.toString());
     }
 
-    let currentCheckpoint = currentCheckpointFromDB;
-    if (currentCheckpoint > 3) {
-        currentCheckpoint = 4;
+    // Asegurarse de que el estado local de currentCheckpoint esté alineado con el de la DB,
+    // y si es mayor a 3, forzarlo al estado final (4).
+    if (currentCheckpointFromDB > 3) {
+        localStorage.setItem('userCheckpointProgress', '4');
     }
 
-    // Llamada a updateUIForCheckpoint pasando las dependencias necesarias.
-    updateUIForCheckpoint(currentCheckpoint, checkpointStatusSpan, checkpointButtonsDiv, option1Button, option2Button, keyDisplay, generatedKeyParagraph, checkpointUrls, generateAndDisplayKey);
-
+    // Finalmente, actualiza la interfaz de usuario según el checkpoint determinado.
+    updateUI(); // Llama a la función de actualización de UI
+    
     // Event listener para el botón de copiar clave
     if (copyKeyButton) {
         copyKeyButton.addEventListener('click', () => {
