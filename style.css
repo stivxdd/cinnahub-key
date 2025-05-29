@@ -1,5 +1,5 @@
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Arial', sans-serif; 
     
     /* --- CONFIGURACIÓN DE IMAGEN DE FONDO RESPONSIVA --- */
     background-image: url('cinnamorollfondo.png'); /* ¡REEMPLAZA ESTO CON LA RUTA DE TU IMAGEN! */
@@ -123,24 +123,23 @@ body {
 /* --- Media Query para Teléfonos --- */
 @media (max-width: 768px) {
     body {
-        /* Ajusta la posición del fondo para que la parte superior sea visible en pantallas pequeñas */
         background-position: center top; 
     }
 
     .container {
-        padding: 20px; /* Reduce el padding del contenedor en móviles */
+        padding: 20px;
     }
 
     .main-title {
-        font-size: 2em; /* Reduce el tamaño del título en móviles */
+        font-size: 2em;
     }
 
     .subtitle {
-        font-size: 1em; /* Reduce el tamaño del subtítulo en móviles */
+        font-size: 1em;
     }
 
     .button-container button {
-        width: 90%; /* Los botones ocupan más ancho en móviles */
+        width: 90%;
         padding: 12px 20px;
     }
 
@@ -149,6 +148,6 @@ body {
     }
 
     .generated-key {
-        font-size: 1.2em; /* Reduce el tamaño de la key en móviles */
+        font-size: 1.2em;
     }
 }
