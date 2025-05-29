@@ -1,80 +1,154 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
+    
+    /* --- CONFIGURACIÓN DE IMAGEN DE FONDO RESPONSIVA --- */
+    background-image: url('cinnamorollfondo.png'); /* ¡REEMPLAZA ESTO CON LA RUTA DE TU IMAGEN! */
+    background-size: cover; /* Hace que la imagen cubra todo el área, recortando si es necesario */
+    background-repeat: no-repeat; /* Evita que la imagen se repita */
+    background-position: center center; /* Centra la imagen tanto horizontal como verticalmente */
+    background-attachment: fixed; /* Mantiene la imagen fija al hacer scroll (opcional, puedes quitarlo) */
+    /* --- FIN DE CONFIGURACIÓN DE IMAGEN DE FONDO RESPONSIVA --- */
+    
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #f0f0f0;
     margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+    color: #333;
 }
 
 .container {
-    background-color: #fff;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    max-width: 500px;
+    background-color: rgba(255, 255, 255, 0.8); /* Fondo blanco semi-transparente para el contenido */
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    max-width: 600px;
     width: 100%;
+    box-sizing: border-box;
 }
 
-h1 {
-    color: #333;
-    margin-bottom: 20px;
+.main-title {
+    color: #FF69B4; /* Rosa pastel para el título */
+    font-family: 'Comic Sans MS', cursive; /* Fuente juguetona, puedes elegir otra */
+    font-size: 3em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 5px;
 }
 
-#checkpoint-status {
-    margin-bottom: 20px;
+.subtitle {
+    color: #6A5ACD; /* Lavanda para el subtítulo */
+    font-size: 1.2em;
+    margin-bottom: 30px;
+}
+
+.button-container {
+    display: flex;
+    flex-direction: column; /* Apila los botones verticalmente */
+    gap: 15px;
+    margin-bottom: 25px;
+    justify-content: center;
+    align-items: center;
+}
+
+.button-container button {
+    background-color: #87CEFA; /* Azul cielo para los botones */
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    cursor: pointer;
     font-size: 1.1em;
     font-weight: bold;
+    width: 80%;
+    max-width: 300px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-#generated-key {
-    font-size: 1.5em;
+.button-container button:hover {
+    background-color: #6495ED; /* Azul más oscuro al pasar el mouse */
+    transform: translateY(-3px);
+}
+
+.checkpoint-indicator {
+    color: #555; /* Gris oscuro para el indicador de checkpoint */
+    font-size: 1.3em;
     font-weight: bold;
-    color: #007bff;
-    word-break: break-all; /* Para claves largas */
-    background-color: #e9ecef;
-    padding: 10px;
-    border-radius: 4px;
     margin-top: 15px;
+    margin-bottom: 20px;
 }
 
-button {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 20px;
-    border: none;
+.key-container {
+    background-color: #E0FFFF; /* Azul celeste muy claro para el contenedor de la clave */
+    border: 2px dashed #ADD8E6; /* Borde punteado suave */
+    padding: 25px;
+    border-radius: 12px;
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.generated-key {
+    font-family: 'Courier New', monospace; /* Fuente monoespaciada para la clave */
+    font-size: 1.8em;
+    color: #20B2AA; /* Verde azulado para la clave generada */
+    word-break: break-all;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 10px 15px;
     border-radius: 5px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.copy-button {
+    background-color: #FFB6C1; /* Rosa claro para el botón de copiar */
+    color: #555;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 20px;
     cursor: pointer;
     font-size: 1em;
-    margin-top: 15px;
-    transition: background-color 0.3s ease; /* Efecto suave al pasar el mouse */
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-button:hover {
-    background-color: #0056b3;
-}
-/* Estilos para el contenedor de los botones de checkpoint */
-#checkpoint-buttons {
-    display: flex; /* Para que los botones estén en línea */
-    flex-wrap: wrap; /* Si la pantalla es pequeña, que se envuelvan */
-    justify-content: center; /* Centra los botones */
-    gap: 15px; /* Espacio entre los botones */
-    margin-top: 20px; /* Espacio superior */
+.copy-button:hover {
+    background-color: #FFC0CB; /* Rosa un poco más claro al pasar el mouse */
+    transform: scale(1.05);
 }
 
-/* Estilos para los botones individuales dentro del checkpoint-buttons */
-#checkpoint-buttons button {
-    flex-basis: 48%; /* Ocupa casi la mitad del espacio disponible */
-    max-width: 220px; /* Ancho máximo para cada botón */
-}
+/* --- Media Query para Teléfonos --- */
+@media (max-width: 768px) {
+    body {
+        /* Ajusta la posición del fondo para que la parte superior sea visible en pantallas pequeñas */
+        background-position: center top; 
+    }
 
-/* Puedes darle un color diferente al hover si quieres distinguirlos */
-#option-1-button:hover {
-    background-color: #004085; /* Un azul un poco más oscuro */
-}
+    .container {
+        padding: 20px; /* Reduce el padding del contenedor en móviles */
+    }
 
-#option-2-button:hover {
-    background-color: #004085; /* Mismo color de hover o puedes elegir otro */
+    .main-title {
+        font-size: 2em; /* Reduce el tamaño del título en móviles */
+    }
+
+    .subtitle {
+        font-size: 1em; /* Reduce el tamaño del subtítulo en móviles */
+    }
+
+    .button-container button {
+        width: 90%; /* Los botones ocupan más ancho en móviles */
+        padding: 12px 20px;
+    }
+
+    .checkpoint-indicator {
+        font-size: 1.1em;
+    }
+
+    .generated-key {
+        font-size: 1.2em; /* Reduce el tamaño de la key en móviles */
+    }
 }

@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const option2Button = document.getElementById('option-2-button');
     const keyDisplay = document.getElementById('key-display');
     const generatedKeyParagraph = document.getElementById('generated-key');
+    const copyKeyButton = document.getElementById('copy-key-button'); // Referencia al botón de copiar
 
     // Variable para controlar el checkpoint actual.
     // Intentamos cargar el progreso guardado en localStorage. Si no hay nada, iniciamos en 1.
@@ -16,21 +17,21 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastGeneratedKey = localStorage.getItem('lastGeneratedKeyAttempt') || null;
 
     // --- Configuración de URLs Acortadas para cada Checkpoint ---
-    // ¡IMPORTANTE!: Estas son tus URLs acortadas reales.
+    // ¡IMPORTANTE!: Reemplaza estas URLs con tus URLs acortadas reales.
     // Asegúrate de que los acortadores estén configurados para redirigir de vuelta a:
     // https://TuUsuario.github.io/nombre-de-tu-repositorio/index.html?return_to_checkpoint=X
     const checkpointUrls = {
         1: [
-        'https://cuty.io/OP2onuNk',
-        'https://link-center.net/1355276/mhLzCyqwizBa'
+            'https://cuty.io/OP2onuNk', // URL acortada para Opción 1, Checkpoint 1
+            'https://link-center.net/1355276/mhLzCyqwizBa' // URL acortada para Opción 2, Checkpoint 1
         ],
         2: [
-        'https://cuty.io/77l7AqLI',
-        'https://link-hub.net/1355295/eljYRfIbugqS'
+            'https://cuty.io/77l7AqLI',
+            'https://link-hub.net/1355295/eljYRfIbugqS'
         ],
         3: [
-        'https://cuty.io/HFgV8wWoG',
-        'https://link-hub.net/1355297/8jX2NRMAg4GL'
+            'https://cuty.io/HFgV8wWoG',
+            'https://link-hub.net/1355297/8jX2NRMAg4GL'
         ]
     };
     // --- FIN de Configuración de URLs ---
@@ -46,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función para actualizar la interfaz de usuario (qué botones mostrar, qué texto).
     function updateUIForCheckpoint(checkpoint) {
-        // Aseguramos que la sección de la clave esté oculta por defecto al actualizar la UI.
+        // Aseguramos que la sección de la clave esté oculta al cambiar de checkpoint.
         keyDisplay.style.display = 'none';
 
         if (checkpoint <= 3) { // Si estamos en un checkpoint activo (1, 2 o 3)
@@ -59,9 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
             checkpointStatusSpan.textContent = `Checkpoint ${currentCheckpoint}`; // Actualiza el texto del estado.
             checkpointButtonsDiv.style.display = 'flex'; // Muestra el contenedor de los botones de checkpoint.
 
-            // Asignamos el texto a cada botón, indicando el checkpoint actual.
-            option1Button.textContent = `Opción 1: Visitar Anuncio ${currentCheckpoint}`;
-            option2Button.textContent = `Opción 2: Ver Publicidad ${currentCheckpoint}`;
+            // Asignamos el texto a cada botón con los nombres personalizados.
+            option1Button.textContent = `Opción 1: Cuty.io`;
+            option2Button.textContent = `Opción 2: LinkVertice`;
 
             // Asignamos la función de redirección a cada botón, pasando la URL correspondiente
             // de las URLs acortadas que definimos.
@@ -134,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- Nueva función para verificar si hay una clave válida guardada y mostrarla ---
+    // --- Función para verificar si hay una clave válida guardada y mostrarla ---
     // Esta función se ejecuta al inicio para ver si el usuario ya tiene una clave activa.
     function checkAndDisplayExistingKey() {
         const storedKey = localStorage.getItem('generatedKey');
@@ -211,4 +212,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Finalmente, actualizamos la interfaz de usuario según el checkpoint determinado.
     updateUIForCheckpoint(currentCheckpoint);
+
+    // Event listener para el botón de copiar clave
+    // Se asegura de que el botón exista antes de intentar añadir un event listener
+    if (copyKeyButton) {
+        copyKeyButton.addEventListener('click', () => {
+            const keyText = generatedKeyParagraph.textContent;
+            navigator.clipboard.writeText(keyText).then(() => {
+                alert('¡Clave copiada al portapapeles!');
+            }).catch(err => {
+                console.error('Error al copiar la clave: ', err);
+                alert('No se pudo copiar la clave al portapapeles.');
+            });
+        });
+    }
 });
