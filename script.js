@@ -41,7 +41,7 @@ const checkpointUrls = {
 
 // Instancia de Firebase y Firestore (inicializada más abajo, pero declarada aquí)
 let db;
-let sessionId = localStorage.getItem('sessionId') || null;
+let sessionId = localStorage.getItem('sessionId') || null; // Carga el ID de sesión del localStorage al inicio
 
 // Función para redirigir al usuario a la URL acortada.
 function redirectToAdPage(shortenedUrl) {
@@ -99,7 +99,7 @@ async function initializeSession() {
 
         if (!doc.exists) {
             await sessionRef.set({
-                currentCheckpoint: 0,
+                currentCheckpoint: 0, // Inicia el progreso en 0 (no iniciado).
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 lastActivity: firebase.firestore.FieldValue.serverTimestamp(),
                 keyRef: null
@@ -141,7 +141,7 @@ async function checkAndDisplayExistingKey() {
                     return true;
                 } else {
                     await sessionDoc.ref.update({
-                        currentCheckpoint: 0,
+                        currentCheckpoint: 0, // Clave expirada, reinicia el progreso
                         keyRef: null
                     });
                     await keyDoc.ref.delete(); 
@@ -162,7 +162,7 @@ async function generateAndDisplayKey() {
     let attempts = 0;
     const maxAttempts = 10;
 
-    // Obtener la última clave generada desde localStorage si existe (para unicidad cliente-side temporal)
+    // Obtener la última clave generada desde localStorage (para unicidad cliente-side temporal)
     let lastGeneratedKey = localStorage.getItem('lastGeneratedKeyAttempt') || null;
 
     while (keyExists && attempts < maxAttempts) {
@@ -191,7 +191,7 @@ async function generateAndDisplayKey() {
         });
 
         await db.collection('sessions').doc(sessionId).update({
-            currentCheckpoint: 4,
+            currentCheckpoint: 4, // Marca el progreso como "finalizado" (clave generada).
             keyRef: newKeyRef
         });
 
@@ -200,7 +200,7 @@ async function generateAndDisplayKey() {
         checkpointStatusSpan.textContent = "¡Clave generada!";
         checkpointButtonsDiv.style.display = 'none';
 
-        // Almacenar la clave generada en localStorage para la próxima vez
+        // Almacenar la clave generada en localStorage (para uso inmediato por la UI local)
         localStorage.setItem('generatedKey', uniqueKey);
         localStorage.setItem('keyExpiration', expiresAt.toString());
         localStorage.setItem('lastGeneratedKeyAttempt', uniqueKey);
@@ -212,17 +212,55 @@ async function generateAndDisplayKey() {
 }
 
 
-// --- Función principal que se ejecuta cuando el DOM está completamente cargado ---
+// --- Función para actualizar la interfaz de usuario ---
+// Ahora esta función toma el 'checkpointActual' como parámetro, que será el estado del usuario.
+function updateUI(checkpointActual) { 
+    keyDisplay.style.display = 'none'; // Asegura que la clave esté oculta
+
+    if (checkpointActual <= 3) {
+        checkpointStatusSpan.textContent = `Checkpoint ${checkpointActual}`;
+        checkpointButtonsDiv.style.display = 'flex';
+
+        option1Button.textContent = `Opción 1: Cuty.io`;
+        option2Button.textContent = `Opción 2: LinkVertice`;
+
+        // Asigna la función de redirección a cada botón usando las URLs correctas.
+        // Se valida que checkpointUrls[checkpointActual] no sea undefined.
+        if (checkpointUrls[checkpointActual] && checkpointUrls[checkpointActual][0]) {
+            option1Button.onclick = () => redirectToAdPage(checkpointUrls[checkpointActual][0]);
+        } else {
+            console.error(`ERROR: URL para Checkpoint ${checkpointActual}, Opción 1 no encontrada. Deshabilitando botón.`);
+            option1Button.disabled = true; // Deshabilita el botón si no hay URL
+            option1Button.textContent = "Error URL";
+        }
+
+        if (checkpointUrls[checkpointActual] && checkpointUrls[checkpointActual][1]) {
+            option2Button.onclick = () => redirectToAdPage(checkpointUrls[checkpointActual][1]);
+        } else {
+            console.error(`ERROR: URL para Checkpoint ${checkpointActual}, Opción 2 no encontrada. Deshabilitando botón.`);
+            option2Button.disabled = true; // Deshabilita el botón si no hay URL
+            option2Button.textContent = "Error URL";
+        }
+
+    } else { // Si el checkpoint es 4 (o mayor), significa que se completaron todos.
+        checkpointStatusSpan.textContent = "¡Proceso Completado!";
+        checkpointButtonsDiv.style.display = 'none';
+        generateAndDisplayKey(); // Llama a la función de generación de clave.
+    }
+}
+
+
+// --- Lógica de inicialización al cargar la página (el punto de entrada del script) ---
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Inicializar Firebase y Firestore primero
     const firebaseInitialized = await initializeFirebaseAndFirestore();
     if (!firebaseInitialized) {
-        // Si Firebase no se inicializa, salimos. Los errores ya se habrán mostrado.
         checkpointStatusSpan.textContent = "Error al cargar la aplicación.";
         return; 
     }
 
     // 2. Inicializar la sesión del usuario con Firebase
+    // Esto obtiene el ID de la sesión y el progreso guardado del usuario desde Firestore.
     const sessionData = await initializeSession();
     let currentCheckpointFromDB = sessionData.currentCheckpoint;
     
@@ -233,44 +271,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // 4. Si no hay clave activa, procede con la lógica de los checkpoints.
-    const urlCheckpointParam = getCheckpointFromURL();
+    const urlCheckpointParam = getCheckpointFromURL(); // Obtiene el checkpoint del parámetro de la URL.
 
-    if (urlCheckpointParam > 0) {
-        if (urlCheckpointParam === currentCheckpointFromDB) {
-            const newCheckpointValue = urlCheckpointParam + 1;
+    if (urlCheckpointParam > 0) { // Si el usuario regresó de un acortador (hay parámetro en la URL).
+        // Lógica de avance: Si el checkpoint de la URL es el que le sigue al progreso en DB (ej. DB=0, URL=1)
+        if (urlCheckpointParam === currentCheckpointFromDB + 1) {
+            const newCheckpointValue = urlCheckpointParam; // El nuevo progreso es el checkpoint que ACABA de completar.
             
             try {
+                // Actualiza el progreso del usuario en Firestore.
                 await db.collection('sessions').doc(sessionId).update({
                     currentCheckpoint: newCheckpointValue,
                     lastActivity: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                currentCheckpointFromDB = newCheckpointValue;
-                localStorage.setItem('userCheckpointProgress', newCheckpointValue.toString()); // Actualiza localStorage para UI
+                currentCheckpointFromDB = newCheckpointValue; // Actualiza la variable local.
+                // También actualizamos localStorage para que updateUI() tenga el valor más reciente.
+                localStorage.setItem('userCheckpointProgress', newCheckpointValue.toString());
             } catch (error) {
                 console.error('Error al actualizar progreso en Firestore:', error);
                 alert('Hubo un error al guardar tu progreso.');
             }
         } else {
-            console.warn(`Intento de salto o redirección incorrecta. Progreso en DB: ${currentCheckpointFromDB}, en URL: ${urlCheckpointParam}.`);
-            localStorage.setItem('userCheckpointProgress', currentCheckpointFromDB.toString()); // Ajusta localStorage al real
+            // Este es el caso cuando:
+            // a) urlCheckpointParam es un salto (ej. DB=0, URL=3)
+            // b) urlCheckpointParam es un progreso ya completado (ej. DB=1, URL=1, por recarga/volver atrás)
+            console.warn(`Intento de salto o redirección incorrecta/repetida. Progreso en DB: ${currentCheckpointFromDB}, en URL: ${urlCheckpointParam}.`);
+            // Mantenemos el progreso local según la DB para evitar saltos.
+            localStorage.setItem('userCheckpointProgress', currentCheckpointFromDB.toString());
         }
 
+        // Limpia el parámetro de la URL para evitar comportamientos inesperados en futuras recargas.
         window.history.replaceState({}, document.title, window.location.pathname);
     } else {
-        localStorage.setItem('userCheckpointProgress', currentCheckpointFromDB.toString()); // Asegura que localStorage esté sincronizado
+        // Si no hay parámetro en la URL (primera carga o recarga sin venir de acortador),
+        // aseguramos que localStorage refleje el progreso de la DB.
+        localStorage.setItem('userCheckpointProgress', currentCheckpointFromDB.toString());
     }
 
-    // Asegurarse de que el estado local de currentCheckpoint esté alineado con el de la DB,
-    // y si es mayor a 3, forzarlo al estado final (4).
-    let currentCheckpoint = parseInt(localStorage.getItem('userCheckpointProgress')) || 1; // Obtiene el último valor real.
-    if (currentCheckpoint > 3) {
-        currentCheckpoint = 4;
-        localStorage.setItem('userCheckpointProgress', '4');
+    // Determina el checkpoint final a mostrar en la UI.
+    let checkpointForUI = parseInt(localStorage.getItem('userCheckpointProgress')) || 1; 
+    if (checkpointForUI > 3) {
+        checkpointForUI = 4; // Asegura que el estado final sea 4.
+        localStorage.setItem('userCheckpointProgress', '4'); // Mantiene la consistencia.
     }
 
-    // Finalmente, actualiza la interfaz de usuario según el checkpoint determinado.
-    updateUI(currentCheckpoint); // Llama a la función de actualización de UI.
-
+    // Finalmente, actualiza la interfaz de usuario con el checkpoint determinado.
+    updateUI(checkpointForUI);
+    
     // Event listener para el botón de copiar clave
     if (copyKeyButton) {
         copyKeyButton.addEventListener('click', () => {
@@ -282,39 +329,5 @@ document.addEventListener('DOMContentLoaded', async () => {
                 alert('No se pudo copiar la clave al portapapeles.');
             });
         });
-    }
-
-    // --- Función para actualizar la interfaz de usuario (declarada aquí para usar variables del DOMContentLoaded) ---
-    function updateUI(checkpointToShow) { 
-        keyDisplay.style.display = 'none';
-
-        if (checkpointToShow <= 3) {
-            checkpointStatusSpan.textContent = `Checkpoint ${checkpointToShow}`;
-            checkpointButtonsDiv.style.display = 'flex';
-
-            option1Button.textContent = `Opción 1: Cuty.io`;
-            option2Button.textContent = `Opción 2: LinkVertice`;
-
-            // Asigna la función de redirección a cada botón usando las URLs correctas
-            // y asegurándose de que checkpointUrls[checkpointToShow] sea válido.
-            if (checkpointUrls[checkpointToShow] && checkpointUrls[checkpointToShow][0]) {
-                option1Button.onclick = () => redirectToAdPage(checkpointUrls[checkpointToShow][0]);
-            } else {
-                console.error(`URL para Checkpoint ${checkpointToShow}, Opción 1 no encontrada.`);
-                option1Button.disabled = true; // Deshabilita el botón si no hay URL
-            }
-
-            if (checkpointUrls[checkpointToShow] && checkpointUrls[checkpointToShow][1]) {
-                option2Button.onclick = () => redirectToAdPage(checkpointUrls[checkpointToShow][1]);
-            } else {
-                console.error(`URL para Checkpoint ${checkpointToShow}, Opción 2 no encontrada.`);
-                option2Button.disabled = true; // Deshabilita el botón si no hay URL
-            }
-
-        } else {
-            checkpointStatusSpan.textContent = "¡Proceso Completado!";
-            checkpointButtonsDiv.style.display = 'none';
-            generateAndDisplayKey(); // Llama a la función de generación de clave.
-        }
     }
 });
