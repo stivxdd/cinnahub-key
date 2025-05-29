@@ -1,5 +1,5 @@
 // --- FUNCIONES GLOBALES / FUERA DEL DOMContentLoaded ---
-// Estas funciones necesitan ser accesibles por los elementos HTML que tienen onclick.
+// Estas funciones deben estar aquí para ser accesibles por los eventos 'onclick' de los botones HTML.
 
 // Función para redirigir al usuario a la URL acortada.
 // Recibe la URL acortada y el número de checkpoint que se está intentando completar.
@@ -22,7 +22,8 @@ function generateRandomKey(length) {
 }
 
 
-document.addEventListener('DOMContentLoaded', async () => { // Hacemos la función principal asíncrona para usar await
+// --- INICIO DEL CÓDIGO QUE SE EJECUTA CUANDO EL DOM ESTÁ CARGADO ---
+document.addEventListener('DOMContentLoaded', async () => {
     // --- CONFIGURACIÓN DE FIREBASE (PEGA TU firebaseConfig AQUÍ) ---
     // ¡IMPORTANTE!: Reemplaza estos valores con los de TU PROYECTO FIREBASE
     const firebaseConfig = {
@@ -38,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => { // Hacemos la funci�
     firebase.initializeApp(firebaseConfig);
 
     // Obtiene una referencia a la instancia de Firestore
-    const db = firebase.firestore(); // Usa firebase.firestore() para la v8
+    const db = firebase.firestore();
     // --- FIN CONFIGURACIÓN DE FIREBASE ---
 
 
@@ -245,7 +246,7 @@ document.addEventListener('DOMContentLoaded', async () => { // Hacemos la funci�
 
             // Asigna la función de redirección a cada botón, usando las URLs acortadas.
             option1Button.onclick = () => redirectToAdPage(checkpointUrls[checkpoint][0], checkpoint);
-            option2Button.onclick = ()s => redirectToAdPage(checkpointUrls[checkpoint][1], checkpoint);
+            option2Button.onclick = () => redirectToAdPage(checkpointUrls[checkpoint][1], checkpoint);
 
         } else { // Si el checkpoint es 4 (o mayor), significa que se completaron todos.
             checkpointStatusSpan.textContent = "¡Proceso Completado!"; // Mensaje de estado final.
