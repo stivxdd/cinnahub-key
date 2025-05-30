@@ -23,15 +23,15 @@ const copyKeyButton = document.getElementById('copy-key-button');
 const checkpointUrls = {
     1: [
         'https://cuty.io/OP2onuNk', 
-        'https://link-center.net/1355276/mhLzCyqwizBa'
+        'https://shrinkme.ink/CinnaHubKey'
     ],
     2: [
         'https://cuty.io/77l7AqLI',
-        'https://link-hub.net/1355295/eljYRfIbugqS'
+        'https://shrinkme.ink/CinnaHubKey2'
     ],
     3: [
         'https://cuty.io/HFgV8wWoG',
-        'https://link-hub.net/1355297/8jX2NRMAg4GL'
+        'https://shrinkme.ink/CinnaHubKey3'
     ]
 };
 
