@@ -14,7 +14,6 @@ const firebaseConfig = {
 const checkpointStatusSpan = document.getElementById('current-checkpoint');
 const checkpointButtonsDiv = document.getElementById('checkpoint-buttons');
 const option1Button = document.getElementById('option-1-button');
-const option2Button = document.getElementById('option-2-button');
 const keyDisplay = document.getElementById('key-display');
 const generatedKeyParagraph = document.getElementById('generated-key');
 const copyKeyButton = document.getElementById('copy-key-button');
@@ -22,16 +21,13 @@ const copyKeyButton = document.getElementById('copy-key-button');
 // Configuración de URLs Acortadas - ¡Tus URLs aquí!
 const checkpointUrls = {
     1: [
-        'https://cuty.io/OP2onuNk', 
-        'https://shrinkme.ink/CinnaHubKey'
+        'https://cuty.io/OP2onuNk'
     ],
     2: [
-        'https://cuty.io/77l7AqLI',
-        'https://shrinkme.ink/CinnaHubKey2'
+        'https://shrinkme.ink/CinnaHubKey'
     ],
     3: [
-        'https://cuty.io/HFgV8wWoG',
-        'https://shrinkme.ink/CinnaHubKey3'
+        'https://cuty.io/HFgV8wWoG'
     ]
 };
 
@@ -225,8 +221,7 @@ function updateUI(checkpointActual) {
         checkpointStatusSpan.textContent = `Checkpoint ${currentProgressForUI}`;
         checkpointButtonsDiv.style.display = 'flex';
 
-        option1Button.textContent = `Opción 1: Cuty.io`;
-        option2Button.textContent = `Opción 2: LinkVertice`;
+        option1Button.textContent = `Cuty.io / shrinkme.io`;
 
         if (checkpointUrls[currentProgressForUI] && checkpointUrls[currentProgressForUI][0]) {
             option1Button.onclick = () => redirectToAdPage(checkpointUrls[currentProgressForUI][0]);
