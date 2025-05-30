@@ -232,15 +232,6 @@ function updateUI(checkpointActual) {
             option1Button.textContent = "Error URL";
         }
 
-        if (checkpointUrls[currentProgressForUI] && checkpointUrls[currentProgressForUI][1]) {
-            option2Button.onclick = () => redirectToAdPage(checkpointUrls[currentProgressForUI][1]);
-            option2Button.disabled = false;
-        } else {
-            console.error(`ERROR: URL para Checkpoint ${currentProgressForUI}, Opción 2 no encontrada. Deshabilitando botón.`);
-            option2Button.disabled = true;
-            option2Button.textContent = "Error URL";
-        }
-
     } else {
         checkpointStatusSpan.textContent = "¡Proceso Completado!";
         checkpointButtonsDiv.style.display = 'none';
